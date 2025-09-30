@@ -4,11 +4,28 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>AudioKit (Playground).xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
 		<key>SingPractice.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>audio.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>audioExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>오디오 레벨을 측정하기 위해 마이크 접근이 필요합니다.</string>
 </dict>
 </plist>

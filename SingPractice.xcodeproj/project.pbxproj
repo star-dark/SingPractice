@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4D9299662E7940AC006E4623 /* AudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4D9299652E7940AC006E4623 /* AudioKit */; };
+		4D9299682E7940B2006E4623 /* AudioKitEX in Frameworks */ = {isa = PBXBuildFile; productRef = 4D9299672E7940B2006E4623 /* AudioKitEX */; };
+		4D92996A2E7940B7006E4623 /* AudioKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 4D9299692E7940B7006E4623 /* AudioKitUI */; };
+		4D92996C2E7940BA006E4623 /* SoundpipeAudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = 4D92996B2E7940BA006E4623 /* SoundpipeAudioKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4D067D992E504E5900C05204 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +36,22 @@
 		4D067DA22E504E5900C05204 /* SingPracticeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SingPracticeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4DBCEB522E780D3B000DD743 /* Exceptions for "SingPractice" folder in "SingPractice" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 4D067D8A2E504E5800C05204 /* SingPractice */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4D067D8D2E504E5800C05204 /* SingPractice */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4DBCEB522E780D3B000DD743 /* Exceptions for "SingPractice" folder in "SingPractice" target */,
+			);
 			path = SingPractice;
 			sourceTree = "<group>";
 		};
@@ -45,6 +65,11 @@
 			path = SingPracticeUITests;
 			sourceTree = "<group>";
 		};
+		4D6D5C032E828A0800C7D49E /* src */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = src;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +77,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D9299662E7940AC006E4623 /* AudioKit in Frameworks */,
+				4D92996A2E7940B7006E4623 /* AudioKitUI in Frameworks */,
+				4D92996C2E7940BA006E4623 /* SoundpipeAudioKit in Frameworks */,
+				4D9299682E7940B2006E4623 /* AudioKitEX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,7 +107,9 @@
 				4D067D8D2E504E5800C05204 /* SingPractice */,
 				4D067D9B2E504E5900C05204 /* SingPracticeTests */,
 				4D067DA52E504E5900C05204 /* SingPracticeUITests */,
+				4D9299642E7940AC006E4623 /* Frameworks */,
 				4D067D8C2E504E5800C05204 /* Products */,
+				4D6D5C032E828A0800C7D49E /* src */,
 			);
 			sourceTree = "<group>";
 		};
@@ -90,6 +121,13 @@
 				4D067DA22E504E5900C05204 /* SingPracticeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4D9299642E7940AC006E4623 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,9 +147,14 @@
 			);
 			fileSystemSynchronizedGroups = (
 				4D067D8D2E504E5800C05204 /* SingPractice */,
+				4D6D5C032E828A0800C7D49E /* src */,
 			);
 			name = SingPractice;
 			packageProductDependencies = (
+				4D9299652E7940AC006E4623 /* AudioKit */,
+				4D9299672E7940B2006E4623 /* AudioKitEX */,
+				4D9299692E7940B7006E4623 /* AudioKitUI */,
+				4D92996B2E7940BA006E4623 /* SoundpipeAudioKit */,
 			);
 			productName = SingPractice;
 			productReference = 4D067D8B2E504E5800C05204 /* SingPractice.app */;
@@ -170,6 +213,9 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
+				KnownAssetTags = (
+					New,
+				);
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
@@ -195,6 +241,12 @@
 			);
 			mainGroup = 4D067D822E504E5800C05204;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4D54BA922E5450C600DB8A96 /* XCRemoteSwiftPackageReference "AudioKit" */,
+				4D9299522E793A8E006E4623 /* XCRemoteSwiftPackageReference "AudioKitEX" */,
+				4D9299532E793AAB006E4623 /* XCRemoteSwiftPackageReference "AudioKitUI" */,
+				4D9299542E793ADE006E4623 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4D067D8C2E504E5800C05204 /* Products */;
 			projectDirPath = "";
@@ -393,11 +445,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SingPractice/SingPractice.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AX9MZ896LY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SingPractice/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -421,11 +475,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SingPractice/SingPractice.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AX9MZ896LY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SingPractice/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -552,6 +608,64 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4D54BA922E5450C600DB8A96 /* XCRemoteSwiftPackageReference "AudioKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/AudioKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.6.5;
+			};
+		};
+		4D9299522E793A8E006E4623 /* XCRemoteSwiftPackageReference "AudioKitEX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/AudioKitEX.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.6.2;
+			};
+		};
+		4D9299532E793AAB006E4623 /* XCRemoteSwiftPackageReference "AudioKitUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/AudioKitUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.7;
+			};
+		};
+		4D9299542E793ADE006E4623 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/SoundpipeAudioKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4D9299652E7940AC006E4623 /* AudioKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D54BA922E5450C600DB8A96 /* XCRemoteSwiftPackageReference "AudioKit" */;
+			productName = AudioKit;
+		};
+		4D9299672E7940B2006E4623 /* AudioKitEX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D9299522E793A8E006E4623 /* XCRemoteSwiftPackageReference "AudioKitEX" */;
+			productName = AudioKitEX;
+		};
+		4D9299692E7940B7006E4623 /* AudioKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D9299532E793AAB006E4623 /* XCRemoteSwiftPackageReference "AudioKitUI" */;
+			productName = AudioKitUI;
+		};
+		4D92996B2E7940BA006E4623 /* SoundpipeAudioKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D9299542E793ADE006E4623 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */;
+			productName = SoundpipeAudioKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4D067D832E504E5800C05204 /* Project object */;
 }
