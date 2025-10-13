@@ -337,7 +337,7 @@ struct PitchVisualizerView: View {
                 }
                 
                 // 궤적 그리기
-                TrailView(pitchHistory: conductor.pitchHistory, geometry: geometry)
+                TrailView(pitchHistory: conductor.pitchHistory, geometry: geometry).allowsHitTesting(false)
                 
                 // 움직이는 구체
                 Circle()
@@ -359,6 +359,7 @@ struct PitchVisualizerView: View {
                         .easeInOut(duration: 0.1),
                         value: spherePosition
                     )
+                    .allowsHitTesting(false)
             }
         }
         .onReceive(conductor.$data) { data in
