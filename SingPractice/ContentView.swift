@@ -23,75 +23,220 @@ struct PitchPoint {
 class AudioRecorderManager: ObservableObject, HasAudioEngine {
     @Published var data = TunerData()
     @Published var pitchHistory: [PitchPoint] = []
-    @Published var playDuration = 0.0
+    @Published var isPlaying = false
     
-    let player = AudioPlayer()
     let engine = AudioEngine()
     let initialDevice: Device
-    let session = AVAudioSession.sharedInstance()
     let mic: AudioEngine.InputNode
     let tappableNodeA: Fader
     let tappableNodeB: Fader
     let tappableNodeC: Fader
     let silence: Fader
-    let mixer: Mixer //믹서 추가
     var tracker: PitchTap!
+    
+    // AudioKit Player 추가
+    var player: AudioPlayer?
+    var playerFader: Fader?
+    var mixer: Mixer?
+    
+    // AVAudioPlayer로 폴백
+    var avPlayer: AVAudioPlayer?
     
     let noteFrequencies = [16.35, 17.32, 18.35, 19.45, 20.6, 21.83, 23.12, 24.5, 25.96, 27.5, 29.14, 30.87]
     let noteNamesWithSharps = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
     let noteNamesWithFlats = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
     
-    // 피치 범위 설정 (시각화를 위한)
-    let minPitch: Float = 80.0   // 낮은 음역
-    let maxPitch: Float = 800.0  // 높은 음역
+    let minPitch: Float = 80.0
+    let maxPitch: Float = 800.0
     private var updateTimer: Timer?
+    
     init() {
+        // AudioKit 전용 오디오 세션 설정
+        #if os(iOS)
         do {
+            let session = AVAudioSession.sharedInstance()
             try session.setCategory(
-                .playAndRecord,              // 송수신 모두
-                mode: .voiceChat,           // 에코 캔슬레이션
+                .playAndRecord,
+                mode: .default,
                 options: [
-                    .allowBluetooth,         // 블루투스 헤드셋
-                    .defaultToSpeaker       // 스피커 기본
+                    .defaultToSpeaker,
+                    .allowBluetooth,
+                    .mixWithOthers
                 ]
             )
             try session.setActive(true)
+            print("✅ 오디오 세션 설정 완료")
         } catch {
-            print("통화 앱 세션 설정 오류: \(error)")
+            print("❌ 오디오 세션 설정 실패: \(error)")
         }
+        #endif
         
-        guard let input = engine.input else { fatalError() }
-        guard let device = engine.inputDevice else { fatalError() }
-        guard let song = URL(string: "https://zwwoqjumejiouapcoxix.supabase.co/storage/v1/object/sign/songs/melody/0095b3fd-1f22-4e07-8544-077b257ffabb.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8yYTE3NjQ5Yy01MWU0LTQzNzItYjMyYi0yNzkxOGI2NDg4YjIiLCJhbGciOiJIUzI1NiJ9. .jRucGLSvR6UuUkPsZWigCjiVM2uJVAFif_WStCQfft4") else {fatalError()}
+        guard let input = engine.input else { fatalError("No input available") }
+        guard let device = engine.inputDevice else { fatalError("No input device") }
+        
         initialDevice = device
         mic = input
         tappableNodeA = Fader(mic)
         tappableNodeB = Fader(tappableNodeA)
         tappableNodeC = Fader(tappableNodeB)
         silence = Fader(tappableNodeC, gain: 0)
-        mixer = Mixer(player)
-        engine.output = mixer
+        
+        // 노래 파일 로드 시도
+        setupAudioPlayer()
+        
+        // PitchTap 설정
         tracker = PitchTap(mic) { pitch, amp in
             DispatchQueue.main.async {
                 self.update(pitch[0], amp[0])
             }
         }
-        do{
-            try engine.start()}
-        catch {
-            print("오디오 엔진 시작 오류: \(error)")
+        
+        tracker.start()
+        startTrailUpdateTimer()
+        
+        // 🎵 init에서 자동으로 노래 재생 시작
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.autoStartPlayback()
+        }
+    }
+    
+    private func autoStartPlayback() {
+        guard let player = player else {
+            print("❌ 플레이어가 초기화되지 않았습니다")
             return
         }
-        tracker.start()
-        func playSong() {
+        
+        print("🎵 자동 재생 시작...")
+        print("🔍 엔진 상태:")
+        print("   - 엔진 실행 중: \(engine.avEngine.isRunning)")
+        print("   - 플레이어 준비: \(player.isStarted)")
+        
+        // 엔진이 멈춰있으면 시작
+        if !engine.avEngine.isRunning {
+            print("🔄 AudioKit 엔진 시작 중...")
             do {
-                try? player.load(url: song)
+                try engine.start()
+                print("✅ AudioKit 엔진 시작됨")
+            } catch {
+                print("❌ AudioKit 엔진 시작 실패: \(error)")
+                return
+            }
+        }
+        
+        // 플레이어 시작
+        player.play()
+        isPlaying = true
+        
+        print("▶️ 자동 재생 완료")
+        print("   - Volume: \(player.volume)")
+        print("   - IsPlaying: \(player.isPlaying)")
+        print("   - IsStarted: \(player.isStarted)")
+        
+        // 1초 후 상태 재확인
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            print("🔍 1초 후 재생 상태:")
+            print("   - IsPlaying: \(player.isPlaying)")
+            print("   - 엔진 실행 중: \(self.engine.avEngine.isRunning)")
+            
+            if !player.isPlaying {
+                print("⚠️ 재생이 멈췄습니다. 다시 시도...")
                 player.play()
             }
         }
-        player.completionHandler = playSong
-        // 궤적 업데이트를 위한 타이머
-        startTrailUpdateTimer()
+    }
+    
+    private func setupAudioPlayer() {
+        guard let songURL = Bundle.main.url(forResource: "vocals", withExtension: "wav") else {
+            print("❌ vocals.wav 파일을 찾을 수 없습니다")
+            print("📁 Bundle 경로: \(Bundle.main.bundlePath)")
+            engine.output = silence
+            return
+        }
+        
+        print("✅ 파일 경로 확인: \(songURL.path)")
+        
+        do {
+            let audioFile = try AVAudioFile(forReading: songURL)
+            player = AudioPlayer(file: audioFile)
+            player?.volume = 1.0
+            player?.isLooping = false
+            
+            // 중요: Fader로 볼륨 조절 가능하게
+            playerFader = Fader(player!, gain: 1.0)
+            
+            // Mixer로 플레이어와 마이크(silence) 믹싱
+            mixer = Mixer(playerFader!, silence)
+            engine.output = mixer
+            
+            print("✅ AudioKit Player로 파일 로드 성공")
+            print("   샘플레이트: \(audioFile.fileFormat.sampleRate) Hz")
+            print("   채널: \(audioFile.fileFormat.channelCount)")
+            print("   길이: \(Double(audioFile.length) / audioFile.fileFormat.sampleRate) 초")
+            
+            // 🔥 중요: 엔진 시작
+            do {
+                try engine.start()
+                print("✅ AudioKit 엔진 시작 완료")
+            } catch {
+                print("❌ AudioKit 엔진 시작 실패: \(error)")
+            }
+            
+        } catch {
+            print("⚠️ AudioKit Player 실패: \(error)")
+            engine.output = silence
+        }
+    }
+    
+    func togglePlayback() {
+        guard let player = player else {
+            print("❌ 플레이어가 초기화되지 않았습니다")
+            return
+        }
+        
+        if player.isPlaying {
+            player.pause()
+            isPlaying = false
+            print("⏸️ 재생 일시정지")
+        } else {
+            // 엔진 상태 확인
+            print("🔍 엔진 상태:")
+            print("   - 엔진 실행 중: \(engine.avEngine.isRunning)")
+            print("   - 플레이어 준비: \(player.isStarted)")
+            
+            // 엔진이 멈춰있으면 재시작
+            if !engine.avEngine.isRunning {
+                print("🔄 AudioKit 엔진 재시작 중...")
+                do {
+                    try engine.start()
+                    print("✅ AudioKit 엔진 시작됨")
+                } catch {
+                    print("❌ AudioKit 엔진 시작 실패: \(error)")
+                    return
+                }
+            }
+            
+            // 플레이어 시작
+            player.play()
+            isPlaying = true
+            
+            print("▶️ 재생 시작")
+            print("   - Volume: \(player.volume)")
+            print("   - IsPlaying: \(player.isPlaying)")
+            print("   - IsStarted: \(player.isStarted)")
+            
+            // 0.5초 후 상태 재확인
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                print("🔍 0.5초 후 상태:")
+                print("   - IsPlaying: \(player.isPlaying)")
+                print("   - 엔진 실행 중: \(self.engine.avEngine.isRunning)")
+            }
+        }
+    }
+    
+    func stopPlayback() {
+        player?.stop()
+        isPlaying = false
+        print("⏹️ 재생 중지")
     }
     
     private func startTrailUpdateTimer() {
@@ -103,7 +248,6 @@ class AudioRecorderManager: ObservableObject, HasAudioEngine {
     }
     
     func update(_ pitch: AUValue, _ amp: AUValue) {
-        // 배경 소음에 대한 민감도 감소
         guard amp > 0.1 else { return }
 
         data.pitch = pitch
@@ -135,16 +279,14 @@ class AudioRecorderManager: ObservableObject, HasAudioEngine {
     private func updateTrail() {
         let currentTime = Date()
         
-        // 3초 이상 된 포인트들 제거
         pitchHistory.removeAll { currentTime.timeIntervalSince($0.timestamp) > 3.0 }
         
-        // 유효한 피치가 있을 때만 궤적에 추가
         if data.amplitude > 0.1 && data.pitch > 0 {
             let normalizedY = CGFloat((data.pitch - minPitch) / (maxPitch - minPitch))
             let clampedY = max(0, min(1, normalizedY))
             
             let newPoint = PitchPoint(
-                x: CGFloat(pitchHistory.count) * 2, // 간격 조정
+                x: CGFloat(pitchHistory.count) * 2,
                 y: clampedY,
                 timestamp: currentTime,
                 opacity: 1.0
@@ -152,7 +294,6 @@ class AudioRecorderManager: ObservableObject, HasAudioEngine {
             
             pitchHistory.append(newPoint)
             
-            // 너무 많은 포인트가 쌓이지 않도록 제한
             if pitchHistory.count > 150 {
                 pitchHistory.removeFirst()
             }
@@ -161,6 +302,9 @@ class AudioRecorderManager: ObservableObject, HasAudioEngine {
     
     deinit {
         updateTimer?.invalidate()
+        tracker.stop()
+        player?.stop()
+        engine.stop()
     }
 }
 
@@ -171,11 +315,6 @@ struct PitchVisualizerView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            // 정보 표시 패널
-            VStack {
-                InfoPanel(conductor: conductor)
-                    .padding()
-            }
             ZStack {
                 // 배경
                 LinearGradient(
@@ -184,6 +323,18 @@ struct PitchVisualizerView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
+                
+                VStack {
+                    // 정보 표시 패널
+                    InfoPanel(conductor: conductor)
+                        .padding()
+                    
+                    Spacer()
+                    
+                    // 재생 컨트롤
+                    PlaybackControls(conductor: conductor)
+                        .padding()
+                }
                 
                 // 궤적 그리기
                 TrailView(pitchHistory: conductor.pitchHistory, geometry: geometry)
@@ -208,7 +359,6 @@ struct PitchVisualizerView: View {
                         .easeInOut(duration: 0.1),
                         value: spherePosition
                     )
-                
             }
         }
         .onReceive(conductor.$data) { data in
@@ -239,6 +389,54 @@ struct PitchVisualizerView: View {
     }
 }
 
+struct PlaybackControls: View {
+    @ObservedObject var conductor: AudioRecorderManager
+    
+    var body: some View {
+        HStack(spacing: 30) {
+            Button(action: {
+                print("🔘 정지 버튼 클릭됨")
+                conductor.stopPlayback()
+            }) {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 30))
+                    .foregroundColor(.white)
+                    .frame(width: 60, height: 60)
+                    .background(Color.red.opacity(0.8))
+                    .clipShape(Circle())
+                    .shadow(radius: 5)
+            }
+            .buttonStyle(PlainButtonStyle()) // 버튼 스타일 명시
+            
+            Button(action: {
+                print("🔘 재생/일시정지 버튼 클릭됨")
+                conductor.togglePlayback()
+            }) {
+                Image(systemName: conductor.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.white)
+                    .frame(width: 80, height: 80)
+                    .background(
+                        LinearGradient(
+                            colors: [.purple, .blue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(Circle())
+                    .shadow(radius: 10)
+            }
+            .buttonStyle(PlainButtonStyle()) // 버튼 스타일 명시
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .shadow(radius: 10)
+        )
+    }
+}
+
 struct TrailView: View {
     let pitchHistory: [PitchPoint]
     let geometry: GeometryProxy
@@ -249,7 +447,7 @@ struct TrailView: View {
             
             for (index, point) in pitchHistory.enumerated() {
                 let age = currentTime.timeIntervalSince(point.timestamp)
-                let opacity = max(0, 1.0 - age / 3.0) // 3초에 걸쳐 페이드아웃
+                let opacity = max(0, 1.0 - age / 3.0)
                 
                 if opacity > 0 {
                     let x = size.width - CGFloat(pitchHistory.count - index) * 3 - 250
@@ -270,7 +468,6 @@ struct TrailView: View {
                 }
             }
             
-            // 궤적을 선으로 연결
             if pitchHistory.count > 1 {
                 var path = Path()
                 let firstPoint = pitchHistory[0]
@@ -317,7 +514,6 @@ struct InfoPanel: View {
                 }
             }
             
-            // 음량 인디케이터
             VStack(alignment: .leading) {
                 Text("음량")
                     .font(.caption)
@@ -340,6 +536,16 @@ struct InfoPanel: View {
                         )
                 }
                 .frame(height: 8)
+            }
+            
+            if conductor.isPlaying {
+                HStack {
+                    Image(systemName: "music.note")
+                        .foregroundColor(.purple)
+                    Text("재생 중")
+                        .font(.caption)
+                        .foregroundColor(.purple)
+                }
             }
             
             InputDevicePicker(device: conductor.initialDevice)
@@ -379,7 +585,6 @@ struct InputDevicePicker: View {
     }
 }
 
-// 메인 뷰
 struct AudioLevelView: View {
     var body: some View {
         PitchVisualizerView()
